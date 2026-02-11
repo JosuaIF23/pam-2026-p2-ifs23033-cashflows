@@ -7,12 +7,17 @@ import org.delcom.entities.CashFlow
 interface ICashFlowService {
     fun getAllCashFlows(query: CashFlowQuery): List<CashFlow>
     fun getCashFlowById(id: String): CashFlow?
+
+    // Function lama (bisa dihapus kalau tidak dipakai, atau biarkan)
     fun createCashFlow(req: CashFlowRequest): String
-    fun updateCashFlow(id: String, req: CashFlowRequest): Boolean
+
+    // Function BARU untuk handle data yang sudah diparse controller
+    fun createCashFlowRaw(type: String, source: String, label: String, amount: Double, description: String): String
+    fun updateCashFlowRaw(id: String, type: String, source: String, label: String, amount: Double, description: String): Boolean
+
     fun deleteCashFlow(id: String): Boolean
     fun setupInitialData(): Int
 
-    // Metadata
     fun getDistinctTypes(): List<String>
     fun getDistinctSources(): List<String>
     fun getDistinctLabels(): List<String>

@@ -12,6 +12,7 @@ import java.util.UUID
 
 class CashFlowService(private val repository: ICashFlowRepository) : ICashFlowService {
 
+    // ... (getAllCashFlows tetap sama) ...
     override fun getAllCashFlows(query: CashFlowQuery): List<CashFlow> {
         return repository.getAll().filter { cf ->
             val matchType = query.type?.let { cf.type.equals(it, true) } ?: true
@@ -20,7 +21,6 @@ class CashFlowService(private val repository: ICashFlowRepository) : ICashFlowSe
             val matchLte = query.lteAmount?.let { cf.amount <= it } ?: true
             val matchSearch = query.search?.let { cf.description.contains(it, true) } ?: true
 
-            // Logic Label OR
             val matchLabels = query.labels?.let { param ->
                 val searchTags = param.split(",").map { it.trim() }.filter { it.isNotBlank() }
                 if (searchTags.isEmpty()) true
@@ -30,7 +30,6 @@ class CashFlowService(private val repository: ICashFlowRepository) : ICashFlowSe
                 }
             } ?: true
 
-            // Logic Date
             val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
             val cfDate = try { LocalDate.parse(cf.createdAt.substring(0, 10)) } catch (e: Exception) { null }
             val matchStart = query.startDate?.let { val start = LocalDate.parse(it, dateFormatter); cfDate?.let { d -> !d.isBefore(start) } ?: false } ?: true
@@ -42,25 +41,24 @@ class CashFlowService(private val repository: ICashFlowRepository) : ICashFlowSe
 
     override fun getCashFlowById(id: String) = repository.getById(id)
 
-    override fun createCashFlow(req: CashFlowRequest): String {
+    // Implementasi Method Baru
+    override fun createCashFlowRaw(type: String, source: String, label: String, amount: Double, description: String): String {
         val id = UUID.randomUUID().toString()
         val now = OffsetDateTime.now().toString()
-        val newCf = CashFlow(
-            id, req.type!!, req.source!!, req.label!!,
-            req.amount!!, req.description!!, now, now
-        )
+        val newCf = CashFlow(id, type, source, label, amount, description, now, now)
         repository.add(newCf)
         return id
     }
 
-    override fun updateCashFlow(id: String, req: CashFlowRequest): Boolean {
+    // Implementasi untuk backward compatibility (jika diperlukan)
+    override fun createCashFlow(req: CashFlowRequest): String {
+        return createCashFlowRaw(req.type!!, req.source!!, req.label!!, req.amount!!.toDouble(), req.description!!)
+    }
+
+    override fun updateCashFlowRaw(id: String, type: String, source: String, label: String, amount: Double, description: String): Boolean {
         val existing = repository.getById(id) ?: return false
         val updated = existing.copy(
-            type = req.type ?: existing.type,
-            source = req.source ?: existing.source,
-            label = req.label ?: existing.label,
-            amount = req.amount ?: existing.amount,
-            description = req.description ?: existing.description,
+            type = type, source = source, label = label, amount = amount, description = description,
             updatedAt = OffsetDateTime.now().toString()
         )
         return repository.update(id, updated)
