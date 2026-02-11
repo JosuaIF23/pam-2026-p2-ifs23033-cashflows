@@ -1,54 +1,53 @@
 package org.delcom
 
+import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.*
-import io.ktor.server.response.*
+import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.routing.*
+import io.ktor.server.response.*
 import org.delcom.controllers.CashFlowController
+import org.delcom.data.ErrorResponse
+import org.delcom.data.AppException
+import org.delcom.helpers.parseMessageToMap
 import org.koin.ktor.ext.inject
 
 fun Application.configureRouting() {
-    val cashFlowController by inject<CashFlowController>()
+    val controller: CashFlowController by inject()
+
+    install(StatusPages) {
+        exception<AppException> { call, cause ->
+            val dataMap = parseMessageToMap(cause.message)
+            call.respond(
+                status = HttpStatusCode.fromValue(cause.code),
+                message = ErrorResponse(
+                    status = "fail",
+                    message = if (dataMap.isEmpty()) cause.message else "Data yang dikirimkan tidak valid!",
+                    data = dataMap
+                )
+            )
+        }
+        exception<Throwable> { call, cause ->
+            cause.printStackTrace()
+            call.respond(
+                status = HttpStatusCode.InternalServerError,
+                message = ErrorResponse(status = "error", message = cause.message ?: "Internal Server Error")
+            )
+        }
+    }
 
     routing {
-        get("/") {
-            call.respondText("Hello World!")
-        }
+        get("/") { call.respondText("11S23033 - Josua Asido Prima Silalahi") }
 
         route("/cash-flows") {
-            // 1. Rute Statis & Setup (Dahulukan ini)
-            post("/setup") {
-                cashFlowController.setupData(call)
-            }
-
-            // 2. Rute Metadata (Harus di atas rute {id})
-            get("/types") {
-                cashFlowController.getTypes(call)
-            }
-            get("/sources") {
-                cashFlowController.getSources(call)
-            }
-            get("/labels") {
-                cashFlowController.getLabels(call)
-            }
-
-            // 3. Rute Koleksi (Get All & Create)
-            get {
-                cashFlowController.getAll(call)
-            }
-            post {
-                cashFlowController.create(call)
-            }
-
-            // 4. Rute Dinamis berdasarkan ID (Letakkan paling bawah)
-            get("/{id}") {
-                cashFlowController.getById(call)
-            }
-            put("/{id}") {
-                cashFlowController.update(call)
-            }
-            delete("/{id}") {
-                cashFlowController.delete(call)
-            }
+            post("/setup") { controller.setupData(call) }
+            get("/types") { controller.getTypes(call) }
+            get("/sources") { controller.getSources(call) }
+            get("/labels") { controller.getLabels(call) }
+            get { controller.getAll(call) }
+            post { controller.create(call) }
+            get("/{id}") { controller.getById(call) }
+            put("/{id}") { controller.update(call) }
+            delete("/{id}") { controller.delete(call) }
         }
     }
 }

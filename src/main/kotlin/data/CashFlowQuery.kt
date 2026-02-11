@@ -1,10 +1,9 @@
-package org.delcom.services
+package org.delcom.data
 
-/**
- * Class ini digunakan untuk menampung parameter pencarian dan filter
- * sesuai dengan kebutuhan skenario pengujian.
- */
-class CashFlowQuery(
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class CashFlowQuery(
     val type: String? = null,
     val source: String? = null,
     val labels: String? = null,

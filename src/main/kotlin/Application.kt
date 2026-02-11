@@ -1,49 +1,24 @@
 package org.delcom
 
-import io.github.cdimascio.dotenv.dotenv
 import io.ktor.server.application.*
-import org.delcom.controllers.CashFlowController
-import org.delcom.repositories.CashFlowRepository
-import org.delcom.services.CashFlowService
-import org.koin.dsl.module
+import org.delcom.data.appModule // PENTING: Gunakan appModule dari package data
 import org.koin.ktor.plugin.Koin
-import org.koin.logger.slf4jLogger
-
+import io.ktor.serialization.kotlinx.json.*
+import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
+import kotlinx.serialization.json.Json
+import io.ktor.server.netty.EngineMain
+import io.github.cdimascio.dotenv.dotenv
 
 fun main(args: Array<String>) {
-    // Muat variabel environment
-    try {
-        val dotenv = dotenv()
-        dotenv.entries().forEach { entry ->
-            System.setProperty(entry.key, entry.value)
-        }
-    } catch (e: Exception) {
-        // Lanjut jika .env tidak ditemukan
-    }
-
-    io.ktor.server.netty.EngineMain.main(args)
-}
-
-// 1. Definisikan modul Koin
-val appModule = module {
-    single { CashFlowRepository() }
-    single { CashFlowService(get()) }
-    single { CashFlowController(get()) }
+    val dotenv = dotenv { directory = "."; ignoreIfMissing = false }
+    dotenv.entries().forEach { System.setProperty(it.key, it.value) }
+    EngineMain.main(args)
 }
 
 fun Application.module() {
-    // 2. Install Plugin Koin
-    install(Koin) {
-        slf4jLogger()
-        modules(appModule)
+    install(ContentNegotiation) {
+        json(Json { prettyPrint = true; ignoreUnknownKeys = true; isLenient = true })
     }
-
-    // 3. Konfigurasi Aplikasi
-    configureSerialization()
-    configureHTTP()
-
-    // PENTING: Aktifkan StatusPages agar error 500 merespon dengan JSON
-    configureStatusPages()
-
+    install(Koin) { modules(appModule) }
     configureRouting()
 }
