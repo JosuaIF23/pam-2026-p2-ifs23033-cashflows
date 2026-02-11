@@ -1,41 +1,47 @@
 package org.delcom.repositories
 
 import org.delcom.entities.CashFlow
-import kotlin.time.Clock
-import kotlin.time.Instant
 
-class CashFlowRepository : ICashFlowRepository {
-    private val data = mutableListOf<CashFlow>()
+class CashFlowRepository {
+    // Penyimpanan data di memori sesuai instruksi praktikum [cite: 105, 156]
+    private val cashFlows = mutableListOf<CashFlow>()
 
-    override fun getAll(): List<CashFlow> = data
+    /**
+     * Mengambil semua daftar catatan keuangan[cite: 154, 219].
+     */
+    fun getAll(): List<CashFlow> = cashFlows
 
-    override fun getById(id: String): CashFlow? = data.find { it.id == id }
-
-    override fun create(type: String, source: String, label: String, amount: Long, description: String): String {
-        val newCashFlow = CashFlow(
-            type = type, source = source, label = label,
-            amount = amount, description = description
-        )
-        data.add(newCashFlow)
-        return newCashFlow.id
+    /**
+     * Menambahkan catatan keuangan baru[cite: 171, 226].
+     */
+    fun add(cashFlow: CashFlow) {
+        cashFlows.add(cashFlow)
     }
 
-    override fun createRaw(id: String, type: String, source: String, label: String, amount: Long, description: String, createdAt: Instant, updatedAt: Instant): String {
-        val rawCashFlow = CashFlow(id, type, source, label, amount, description, createdAt, updatedAt)
-        data.add(rawCashFlow)
-        return rawCashFlow.id
+    /**
+     * Mencari data berdasarkan ID untuk validasi[cite: 268, 275].
+     */
+    fun findById(id: String): CashFlow? = cashFlows.find { it.id == id }
+
+    /**
+     * Memperbarui data yang sudah ada[cite: 275].
+     * Mengembalikan 'true' jika berhasil, 'false' jika ID tidak ditemukan.
+     */
+    fun update(id: String, updatedCashFlow: CashFlow): Boolean {
+        val index = cashFlows.indexOfFirst { it.id == id }
+        return if (index != -1) {
+            cashFlows[index] = updatedCashFlow
+            true
+        } else {
+            false
+        }
     }
 
-    override fun update(id: String, type: String, source: String, label: String, amount: Long, description: String): Boolean {
-        val target = getById(id) ?: return false
-        target.type = type
-        target.source = source
-        target.label = label
-        target.amount = amount
-        target.description = description
-        target.updatedAt = Clock.System.now()
-        return true
+    /**
+     * Menghapus data berdasarkan ID[cite: 158, 293].
+     * Mengembalikan 'true' jika ada data yang dihapus.
+     */
+    fun removeById(id: String): Boolean {
+        return cashFlows.removeIf { it.id == id }
     }
-
-    override fun delete(id: String): Boolean = data.removeIf { it.id == id }
 }
