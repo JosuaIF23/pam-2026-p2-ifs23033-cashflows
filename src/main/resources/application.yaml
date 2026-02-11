@@ -3,4 +3,4 @@ ktor:
     modules:
       - org.delcom.ApplicationKt.module
   deployment:
-    port: ${APP_PORT:-30031}
+    port: 8080
