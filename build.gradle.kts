@@ -16,9 +16,7 @@ application {
     mainClass = "org.delcom.ApplicationKt"
 }
 
-kotlin {
-    jvmToolchain(25)
-}
+
 
 dependencies {
     implementation("io.insert-koin:koin-ktor:$koin_version")
